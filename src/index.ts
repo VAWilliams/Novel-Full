@@ -1,19 +1,24 @@
-import { IncomingMessage, RequestListener, ServerResponse, createServer } from 'http';
+import express from 'express';
+import { NovelScraper } from './scrapers/novel.scraper';
 
-type AppRequestListener = RequestListener<typeof IncomingMessage, typeof ServerResponse> | undefined;
+const app = express();
+const port = 3000;
 
-const host = 'localhost';
-const port = 8000;
+app.get('/search', (request, response) => {
+    const keyword = request.query.keyword ?? '';
+    const hasKeyword = !!keyword && typeof keyword === 'string';
 
-const requestListener: AppRequestListener =  (req, res) => {
-    res.writeHead(200);
-    res.end("My first server!");
-};
+    if (!hasKeyword) return response
+        .status(400)
+        .json({
+            message: 'Please provide keyword.'
+        });
 
-const server = createServer(requestListener);
+    NovelScraper.searchNovelByKeyword(keyword)
+        .then(novels => response.status(200).json(novels))
+        .catch(error => response.status(500).json({ error }));
+})
 
-server.listen(port, host, () => {
-    console.log(`Server is running on http://${host}:${port}`);
-});
-
-console.log('Hello world!')
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}.`)
+})
