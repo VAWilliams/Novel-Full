@@ -11,7 +11,8 @@ app.get('/search', (request, response) => {
     if (!hasKeyword) return response
         .status(400)
         .json({
-            message: 'Please provide keyword.'
+            message: 'Please adhere to the request format.',
+            format: '/search?keyword=<keyword>'
         });
 
     NovelScraper.searchNovelByKeyword(keyword)
