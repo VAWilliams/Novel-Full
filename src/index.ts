@@ -24,9 +24,9 @@ app.get('/search', (request, response) => {
 
 app.get('/info/:resourcePath', (request: NovelInfoRequest, response) => {
     const resourcePath = request.params.resourcePath ?? '';
-    const hasResourceParh = !!resourcePath && typeof resourcePath === 'string';
+    const hasResourcePath = !!resourcePath && typeof resourcePath === 'string';
 
-    if (!hasResourceParh) return response
+    if (!hasResourcePath) return response
         .status(400)
         .json({
             message: 'Please adhere to the request format.',
