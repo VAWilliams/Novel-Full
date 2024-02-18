@@ -1,4 +1,5 @@
 import { ChapterLink } from "./chapter-link.model";
+import { Request } from "express";
 
 export interface NovelInfo {
     title: string;
@@ -11,3 +12,5 @@ export interface NovelInfo {
     source: string;
     status: string;
 }
+
+export type NovelInfoRequest = Request<{ resourcePath?: string }>

@@ -1,5 +1,7 @@
-import express, { Request } from 'express';
+import express from 'express';
 import { NovelScraper } from './scrapers/novel.scraper';
+import { NovelInfoRequest } from './models/novel-info.model';
+import { ChapterRequest } from './models/chapter.model';
 
 const app = express();
 const port = 3000;
@@ -20,7 +22,7 @@ app.get('/search', (request, response) => {
         .catch(error => response.status(500).json({ error }));
 })
 
-app.get('/info/:resourcePath', (request: Request<{ resourcePath?: string }>, response) => {
+app.get('/info/:resourcePath', (request: NovelInfoRequest, response) => {
     const resourcePath = request.params.resourcePath ?? '';
     const hasResourceParh = !!resourcePath && typeof resourcePath === 'string';
 
@@ -33,6 +35,27 @@ app.get('/info/:resourcePath', (request: Request<{ resourcePath?: string }>, res
 
     NovelScraper.getNovelInfo(resourcePath)
         .then(novelInfo => response.status(200).json(novelInfo))
+        .catch(error => response.status(500).json({ error }));
+})
+
+app.get('/chapter/:novel/:chapter', (request: ChapterRequest, response) => {
+    const novel = request.params.novel ?? '';
+    const hasNovel = !!novel && typeof novel === 'string';
+
+    const chapter = request.params.chapter ?? '';
+    const hasChapter = !!chapter && typeof chapter === 'string';
+
+    const hasParams = hasNovel && hasChapter;
+
+    if (!hasParams) return response
+        .status(400)
+        .json({
+            message: 'Please adhere to the request format.',
+            format: '/chapter/<novel>/<chapter>'
+        });
+
+    NovelScraper.getChapter(novel, chapter)
+        .then(chapter => response.status(200).json(chapter))
         .catch(error => response.status(500).json({ error }));
 })
 

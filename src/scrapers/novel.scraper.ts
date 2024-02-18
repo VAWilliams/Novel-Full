@@ -3,6 +3,8 @@ import { Novel } from "../models/novel.model";
 import { NovelInfo } from '../models/novel-info.model';
 import { ChapterLink } from '../models/chapter-link.model';
 import novelInfoSelector from '../selectors/novel-info.selector';
+import chapterSelector from '../selectors/chapter.selector';
+import { Chapter, ChapterNavigation } from '../models/chapter.model';
 
 const host = 'https://novelfull.com';
 
@@ -73,7 +75,7 @@ export class NovelScraper {
                     name: anchor.querySelector('span')?.textContent?.trim(),
                     link: anchor.attributes.getNamedItem('href')?.value
                 } as ChapterLink)
-            )
+                )
         );
 
         const image = await evaluateWhenDone(
@@ -133,6 +135,45 @@ export class NovelScraper {
             genres,
             source,
             status
+        };
+    }
+
+    static async getChapter(novel: string, chapter: string): Promise<Chapter> {
+        const browser = await puppeteer.launch({
+            args: [
+                '--disable-web-security',
+            ], headless: false
+        });
+        const page = await browser.newPage();
+        await page.goto(`${host}/${novel}/${chapter}`);
+
+        const novelElement = await page.waitForSelector(chapterSelector.novel);
+        const novelTitle = await novelElement?.evaluate(element => element.textContent) as string;
+
+        const chapterElement = await page.waitForSelector(chapterSelector.title);
+        const chapterTitle = await chapterElement?.evaluate(element => element.textContent) as string;
+
+        const contentElement = await page.waitForSelector(chapterSelector.content);
+        const content = await contentElement?.evaluate((element, chapterTitle) => Array
+            .from(element.querySelectorAll('p'))
+            .map(paragraph => paragraph.textContent?.trim())
+            .filter(text => !!text && text !== chapterTitle),
+            chapterTitle
+        ) as string[];
+
+        const chapterNavigationElement = await page.waitForSelector(chapterSelector.chapterNavigation);
+        const links = await chapterNavigationElement?.evaluate(element => ({
+            previous: element.querySelector('[id="prev_chap"]')?.attributes.getNamedItem('href')?.value,
+            next: element.querySelector('[id="next_chap"]')?.attributes.getNamedItem('href')?.value,
+        })) as ChapterNavigation;
+
+        await browser.close();
+
+        return {
+            novel: novelTitle,
+            title: chapterTitle,
+            content,
+            links
         };
     }
 
